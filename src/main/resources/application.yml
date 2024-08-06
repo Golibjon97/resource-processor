@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: resource-processor
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    topic:
+      name: resource
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "com.epam.*"
+    consumer:
+      group-id: resource-processor-id
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "com.epam.*"
+            use:
+              type:
+                headers: false
+          deserializer:
+            value:
+              delegate:
+                class: org.apache.kafka.common.serialization.StringDeserializer
+
+server:
+  port: 8282
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
+    enabled: true
