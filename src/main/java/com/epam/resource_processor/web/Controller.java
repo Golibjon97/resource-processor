@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/resource/processor")
 public class Controller {
 
-  private ResourceProcessorService resourceProcessorService;
+  private final ResourceProcessorService resourceProcessorService;
 
   public Controller(ResourceProcessorService resourceProcessorService) {
     this.resourceProcessorService = resourceProcessorService;
   }
 
   @PostMapping
-  public void someTest() throws IOException {
+  public void processMp3() throws IOException {
     System.out.println("start");
     resourceProcessorService.processMp3Data("1");
     System.out.println("end");

@@ -1,7 +1,7 @@
 package com.epam.resource_processor.model;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+
 
 @Data
 @Builder
@@ -10,6 +10,6 @@ public class MetadataDto {
   private String artist;
   private String album;
   private String length;
-  private Integer resourceId;
+  private Integer s3LocationId;
   private String year;
 }
