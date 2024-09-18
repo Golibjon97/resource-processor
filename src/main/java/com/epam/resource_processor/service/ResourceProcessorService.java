@@ -42,12 +42,10 @@ public class ResourceProcessorService {
     }
 
     public void deleteMp3Metadata(String ids){
-        // Build the URL with the query parameter
         String songDeleteUrl = UriComponentsBuilder.fromHttpUrl(SONG_SERVICE_URL + "/delete")
                 .queryParam("ids", ids)
                 .toUriString();
 
-        // Send the DELETE request
         restTemplate.delete(songDeleteUrl);
     }
 
@@ -74,7 +72,7 @@ public class ResourceProcessorService {
 
     public String getDurationInMinutes(String duration) {
         if (duration == null || duration.isEmpty()) {
-            return "0:00";  // Default value for duration when it is not available
+            return "0:00";
         }
         int value = Integer.parseInt(duration.substring(0, duration.indexOf(".")));
         return (value / 60) + ":" + (value % 60);

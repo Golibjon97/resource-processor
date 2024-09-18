@@ -5,6 +5,7 @@ import lombok.*;
 
 @Data
 @Builder
+@AllArgsConstructor
 public class MetadataDto {
   private String name;
   private String artist;

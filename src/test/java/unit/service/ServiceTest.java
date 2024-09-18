@@ -2,7 +2,6 @@ package unit.service;
 
 import com.epam.resource_processor.model.MetadataDto;
 import com.epam.resource_processor.service.ResourceProcessorService;
-import org.apache.tika.exception.TikaException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.xml.sax.SAXException;
 
 import java.io.IOException;
 
@@ -27,12 +25,12 @@ public class ServiceTest {
     private ResourceProcessorService resourceProcessorService;
 
     @Test
-    void processMp3DataTest() throws IOException, TikaException, SAXException {
+    void processMp3DataTest() throws IOException {
 
         String resourceServiceUrl = "http://localhost:8080/api/v1/resources/mp3/";
         String songServiceUrl = "http://localhost:8081/api/v1/song";
         byte[] mp3Data = "Test song".getBytes();
-        String resourceId = "sampleId";
+        String resourceId = "1";
 
         when(restTemplate.getForEntity(resourceServiceUrl + resourceId, byte[].class))
                 .thenReturn(new ResponseEntity<>(mp3Data, HttpStatus.OK));
