@@ -1,4 +1,4 @@
-package com.epam.resource_processor.web;
+package com.epam.resource_processor.web.test;
 
 import com.epam.resource_processor.service.ResourceProcessorService;
 import java.io.IOException;

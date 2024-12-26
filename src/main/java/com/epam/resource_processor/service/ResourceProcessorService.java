@@ -4,14 +4,17 @@ import com.epam.resource_processor.model.MetadataDto;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.List;
 
-import com.epam.resource_processor.util.CustomUtility;
-import lombok.AllArgsConstructor;
+import com.epam.resource_processor.util.Operations;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.mp3.Mp3Parser;
 import org.apache.tika.sax.BodyContentHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -19,49 +22,55 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.xml.sax.SAXException;
 
 @Service
-@AllArgsConstructor
 public class ResourceProcessorService {
 
-    private RestTemplate restTemplate;
+    private final DiscoveryClient discoveryClient;
+    private final RestTemplate restTemplate;
 
-    private static final String SONG_SERVICE_URL = "http://localhost:8081/api/v1/song";
+    @Autowired
+    public ResourceProcessorService(RestTemplate restTemplate, DiscoveryClient discoveryClient) {
+        this.restTemplate = restTemplate;
+        this.discoveryClient = discoveryClient;
+    }
 
     @Retryable
     public void processMp3Data(String s3LocationId) throws IOException {
 
-        Integer s3Id = CustomUtility.toInteger(s3LocationId);
-        String resourceServiceUrl = "http://localhost:8080/api/v1/resources/mp3/";
+        String resourceServiceUrl = getUri(Operations.GET_RESOURCE) + s3LocationId;
+        String songServiceUrl = getUri(Operations.POST_SONG);
 
-        byte[] mp3Data = restTemplate.getForEntity(resourceServiceUrl + s3LocationId, byte[].class).getBody();
+        byte[] mp3Data = restTemplate.getForEntity(resourceServiceUrl, byte[].class).getBody();
 
         try {
-            restTemplate.postForEntity(SONG_SERVICE_URL, getMetadata(mp3Data, s3Id), Integer.class);
+            restTemplate.postForEntity(songServiceUrl, getMetadata(mp3Data, s3LocationId), Integer.class);
         } catch (TikaException | SAXException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void deleteMp3Metadata(String ids){
-        String songDeleteUrl = UriComponentsBuilder.fromHttpUrl(SONG_SERVICE_URL + "/delete")
+        String songServiceUrl = getUri(Operations.DELETE_SONG);
+
+        String songDeleteUrl = UriComponentsBuilder.fromHttpUrl(songServiceUrl)
                 .queryParam("ids", ids)
                 .toUriString();
 
         restTemplate.delete(songDeleteUrl);
     }
 
-    public MetadataDto getMetadata(byte[] mp3Data, Integer s3Id) throws IOException, TikaException, SAXException {
+    public MetadataDto getMetadata(byte[] mp3Data, String s3LocationId) throws IOException, TikaException, SAXException {
         Mp3Parser mp3Parser = new Mp3Parser();
         BodyContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
         ParseContext context = new ParseContext();
 
         mp3Parser.parse(new ByteArrayInputStream(mp3Data), handler, metadata, context);
-        return buildMetadata(metadata, s3Id);
+        return buildMetadata(metadata, s3LocationId);
     }
 
-    private MetadataDto buildMetadata(Metadata metadata, Integer s3Id) {
+    private MetadataDto buildMetadata(Metadata metadata, String s3LocationId) {
         return MetadataDto.builder()
-                .s3LocationId(s3Id)
+                .s3LocationId(Integer.valueOf(s3LocationId))
                 .year(metadata.get("xmpDM:releaseDate"))
                 .artist(metadata.get("xmpDM:artist"))
                 .name(metadata.get("dc:title"))
@@ -76,6 +85,19 @@ public class ResourceProcessorService {
         }
         int value = Integer.parseInt(duration.substring(0, duration.indexOf(".")));
         return (value / 60) + ":" + (value % 60);
+    }
+
+    private String getUri(Operations operationName){
+        List<ServiceInstance> serviceInstances = discoveryClient.getInstances("spring-cloud-gateway");
+        ServiceInstance serviceInstance = serviceInstances.get(0);
+        String uri = serviceInstance.getUri().toString();
+
+        return switch (operationName) {
+            case GET_RESOURCE -> uri + "/api/v1/resources/mp3/";
+            case POST_SONG -> uri + "/api/v1/song";
+            case DELETE_SONG -> uri + "/api/v1/song/delete";
+        };
+
     }
 
 }

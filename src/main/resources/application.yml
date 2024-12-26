@@ -35,7 +35,7 @@ spring:
                 class: org.apache.kafka.common.serialization.StringDeserializer
 
 server:
-  port: 8282
+  port: 0
 
 eureka:
   client:
