@@ -27,17 +27,19 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-aop")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
 	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.springframework.retry:spring-retry:${springRetryVersion}")
 	implementation("org.apache.tika:tika-core:${tikaCoreVersion}")
 	implementation("org.apache.tika:tika-parser-audiovideo-module:${tikaCoreVersion}")
+	implementation("org.springframework.kafka:spring-kafka-test")
+	implementation("io.micrometer:micrometer-registry-prometheus")
 
 	compileOnly("org.projectlombok:lombok:${lombokVersion}")
 	annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	implementation("org.springframework.kafka:spring-kafka-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

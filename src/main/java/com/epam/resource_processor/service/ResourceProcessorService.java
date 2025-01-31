@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.epam.resource_processor.util.Operations;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -22,10 +23,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.xml.sax.SAXException;
 
 @Service
+@Slf4j
 public class ResourceProcessorService {
 
     private final DiscoveryClient discoveryClient;
     private final RestTemplate restTemplate;
+
 
     @Autowired
     public ResourceProcessorService(RestTemplate restTemplate, DiscoveryClient discoveryClient) {
@@ -39,16 +42,22 @@ public class ResourceProcessorService {
         String resourceServiceUrl = getUri(Operations.GET_RESOURCE) + s3LocationId;
         String songServiceUrl = getUri(Operations.POST_SONG);
 
+        log.info("sent data to resource service: {}", resourceServiceUrl);
         byte[] mp3Data = restTemplate.getForEntity(resourceServiceUrl, byte[].class).getBody();
+        log.info("received data from resource service: {}", resourceServiceUrl);
 
         try {
-            restTemplate.postForEntity(songServiceUrl, getMetadata(mp3Data, s3LocationId), Integer.class);
+            log.info("sent data to song service");
+            Integer songId =
+                    restTemplate.postForEntity(songServiceUrl, getMetadata(mp3Data, s3LocationId), Integer.class).getBody();
+            log.info("received data from song service with id: {}", songId);
         } catch (TikaException | SAXException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void deleteMp3Metadata(String ids){
+        log.info("Processing song deletion with ids: {}", ids);
         String songServiceUrl = getUri(Operations.DELETE_SONG);
 
         String songDeleteUrl = UriComponentsBuilder.fromHttpUrl(songServiceUrl)
@@ -56,6 +65,7 @@ public class ResourceProcessorService {
                 .toUriString();
 
         restTemplate.delete(songDeleteUrl);
+        log.info("Deletion processing completed");
     }
 
     public MetadataDto getMetadata(byte[] mp3Data, String s3LocationId) throws IOException, TikaException, SAXException {
